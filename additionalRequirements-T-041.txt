@@ -1,0 +1,36 @@
+
+G-07/T-041.
+
+The project is limited by management.  And we have external services that will need access to the tables such as powerBi reporting. For a template, we do not know what columns are, either. So SQL Server "Always Encrypted" is not an option for a template.
+
+So we will go with application side encryption.
+
+Per management, secrets are held in appsettings.secrets.json file.  Contents are encrypted.  This is the extent of their requirement. 
+
+Developer comments:
+
+These secrets include
+
+1. sql server login password for application to connect to SQL Server databases.
+2. API ID
+3. API Key.
+
+In theory, this list can grow.  
+
+Developer requested an encryption option embedded in the process.  json file should have:
+
+  "Encrypted": false,
+
+The application will validate the entries.  If all entries work, it will set encrypt and set it to true.  This is assumed to be performed on the application side, not the database.
+
+Developer recommend implementing TPM-backed CNG key as the vault, with envelope encryption in the app layer for single-server setup, meaning the application-layer server.  The web front-end server does not need this.
+
+If possible, leave "hooks" to support a self-hosted HashiCorp Vault if management decides to go that route someday.
+
+Need to update the developer "gotchas".  
+
+Update the workbooks, documentation, and README.
+
+
+
+

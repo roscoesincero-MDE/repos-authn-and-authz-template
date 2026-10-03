@@ -1,0 +1,143 @@
+
+
+This is a database-first architecture that uses "soft-delete" and auditing.  See ponytail-sql-object skill for details.  This skill is taken from other projects.  References to other projects are used as examples only, do not assume it will be incorporated into this project.  Ideally, the skill should be modified to remove these references so it can be applied to other projects without having a need to explain that it includes example references.
+
+We need a database authentication and authorization design document that supports the following web applications:
+
+1.  Application 1
+
+User A works for the Maryland Department of Environment (MDE).  He has roles A which is read-only.
+User B works for the Maryland Department of Environment.  He has roles B which means he can also insert records.  He also has roles A.
+User C works for the Maryland Department of Environment.  He has role C which means he can also update records.  He also has roles A and B.
+User D works for the Maryland Department of Environment.  He had role D, which means he can assign roles to other users.  He is responsible for assigning role A to user A.  He assigns role A and B to user B.
+User E1 works for the Maryland Department of Environment.  He has roles A, B, C, and D.
+User E2 works for the Maryland Department of Environment.  He has roles A, B, C, and D.  And he is a system-wide admin.
+
+Although not used in example above, we can have a role that can execute procedures.  If there are other types of roles, add them.
+
+Users A, B, C, D, E1 and E2 can see all records, provided that they were given role A or any other role that has read rights.
+
+User F works for Anne Arundel.  He has roles D1, which means he can assign roles to other users.  He can only affect users who also work for Anne Arundel.
+
+User G works for Anne Arundel.  He has roles D2, which means is read-only.
+User H works for Anne Arundel.  He has roles D3, which means is he insert records.  He also has role D2.
+User I works for Anne Arundel.  He has roles D4, which means is he update records.  He also has role D1 and D2.
+User J works for Anne Arundel.  He has D1, D2, D3, and D4.
+
+User K works Baltimore City.  He has roles E2, which means he can assign roles to other users, provided the other user is also from Baltimore City.
+User L works Baltimore City.  He has roles E1, E2, E4, and E4 (he can assign roles, read, insert, and update records.)
+
+User M works for Anne Arundel and Baltimore City.  He has F1 (read), F2 (write), and F3 (update) roles for both Anne Arundel and Baltimore City records.
+
+Note the difference in role pattern.  Role D (the 4th role) affects other users while roles D1 and E2 (first and second) affects users.  This means different organizations have their roles defined in different orders.  The order of how roles were defined should have zero impact.
+
+When users are created, their default role is the read-only roles.
+
+Users of MDE can see all records if they had read role.  They can also update records if given a role with update rights.  They can insert records if given a role with insert rights.  Read, update, and insert are separate roles.  Roles that assign users with roles is also a separate role itself. Role that can create users is a separate role.  Role that can update users is a separate role.  This pattern should exist for counties and other tenants/organizations. 
+
+Users of Anne Arundel can only see Anne Arundel records so at a minimum they have read records.  Users of Baltimore City can only see Baltimore City records so at a minimum they have read rights.
+
+This strongly suggest that the tenant structure has a hierarchy where users can impact records below them in the hierarchy provided that they are given the proper roles.
+
+In addition to roles, users have profiles that serves as a generic purpose of being virtual containers for tenant and roles.  And users can switch between profiles.  The purpose of this profile switching is -- as an example -- for an MDE user to switch to an Anne Arundel profile and see for themselves what they can do without having to create a brand new account.  While under this Anne Arundel profile, the MDE user can only perform Anne Arundel duties so he cannot do anything with Baltimore City while using the Anne Arundel profile, for instance. The MDE user will have to switch to another profile if he wants to perform other tasks.
+
+An Anne Arundel user can switch to another Anne Arundel profile to see what a fellow Anne Arundel user can do without having to create a brand new account.
+
+Expanding on this concept, user M who works for both counties will be switching profiles between AA and BC when doing his task.  This is to enforce the requirement that only AA users can see AA records, etc.  And this means roles F1, F2, and F3 are actually meaningless. If he added records under his BC profile that was actually meant for AA, he is guilty of a data entry error.
+
+User D who only assigns roles can not do any data entry for anyone.  The only tables he has any impact on are tables used for authorization.  He doesn't gain additional roles when he assigns them to others.
+
+User E1 who can also assign roles can perform data entry.  IF E1 performs data entry impacting AA records, the AA users will not be able to see them because he is not part of any profile involving AA.  E1 was performing data entry for MDE.  E1 must be added to a profile that has AA as a tenant and must switch to that profile; otherwise, his work is another example of data entry error.
+
+This is a "gotcha" for UI development, not database design concern.  The userinterface (UI) must somehow clearly indicate to the user which tenant he is working for and what profile he is using.  I have seen UIs where your username or userid was not even displayed anywhere in the application.  This oversight shouldn't be duplicated for newer applications.
+
+In the above description for application 1 and other applications later on in this document, the word "role" is used extensively.  In practice, users are actually assigned profiles where those profiles contain not only the tenant they belong in but also their roles. And users can have more than 1 role within a profile as well as more than 1 profile. Documentation should reflect proper terminology and not use the word "role" exclusively when "profile" would be the better term.  Humans tend to use the words profile and role interchangeably.  Documentation should use these words properly based on context.
+
+In this context, sysadmin is a user that can use login/2fa to login in addition to the normal SSO login.  This mirrors state of maryland github login page ( https://state-of-maryland.ghe.com/ ) where there is a separate link for "enterprise admin" to bypass SSO login.
+
+Application can use Microsoft Entra for SSO.  By default, MDE users uses SSO unless they are also "enterprise admin"/"sys-admin"/"platform admin".  County users only use login with 2FA only and do not use SSO.
+
+"enterprise admin"/"sys-admin"/"platform admin" all mean the same thing.  Pick the best name and we'll use that throughout.
+
+Based on profile, users will have access to certain screens or tabs in the user interface.  We currently do not have any screens or tabs of any kind since the UI does not exist yet.  You will need to include in the design how to incorporate these screens and/or tabs for user access in order to help developers design the UI.  Assume the UI is written in .net 10, following MVP pattern, and uses dapper to call stored procedures. Assume Entity Framework Core is not used.   The UI only calls stored procedures per management requirement.
+
+
+
+2.  Application 2
+
+User A works for the Maryland Department of Environment (MDE) in Land Management Administration (LMA).
+User B works for the Maryland Department of Environment (MDE) in Water and Science Administration (WSA).
+User C works for the Maryland Department of Environment (MDE) in Air and Radiation Administration (ARA).
+User D works for the Maryland Department of Environment (MDE) in IT.
+User E works for the Maryland Department of Environment (MDE) in IT and is a sys-admin.
+
+User C works in Radiological Health Program (RHP) of ARA.
+User C also does work for the Hazardous Waste Program of LMA.
+User B works for Wastewater Permits program of WSA.
+User A works for Hazardous Waste Program of LMA.
+
+User D's job is to assign roles to users.  A, B, C are assigned read, insert, and update but only in programs they work in.  They are given read for all other programs.
+
+User E is D's backup so he too can assign roles when D is not present.
+
+The roles are R1 (assign roles), R2 (read), R3 (update), R4 (insert).
+
+When users are created, their default role is the read-only roles.
+
+In this context, sysadmin is one that can use login/2fa to login in addition to the normal SSO login.
+Application can use Microsoft Entra SSO for MDE users.  
+
+As before, "role" is used extensively to describe the operation but users are actually assigned to profiles.  Users of application 2 can switch profiles like users of application 1 can. 
+
+3.  Application 3.
+
+This is the most common application type used by the agency.  Public-facing apps (that only have external users), internal-facing apps, and public facing apps that have both external and internal users all follow this type.
+
+User A works for the Maryland Department of Environment (MDE) in Land Management Administration (LMA).
+User B works for the Maryland Department of Environment (MDE) in Water and Science Administration (WSA).
+User C works for the Maryland Department of Environment (MDE) in Air and Radiation Administration (ARA).
+User D works for the Maryland Department of Environment (MDE) in IT.
+User E works for the Maryland Department of Environment (MDE) in IT and is a sys-admin.
+
+User F1 works for organization O1
+User F2 works for organization O1
+User G1 works for organization O2.
+User G2 works for organization O2.
+User H works for organization O3.
+
+All users use login/2fa.  SSO is not an option.
+
+In this context, the "sys-admin" classification offers no distinction to other types of users.  This differs from application 1 and 2 where a sys-admin user has two authentication options: SSO and login/2fa.  SSO isn't used by this type of application.
+
+Users of MDE can see everyone's records, provided they were given a role that has read rights.  Like application 1, there is a authorization hierarchy.
+User D's job is to assign roles to users. 
+User E is D's backup so he too can assign roles when D is not present.
+
+Users F1, F2, G1, G2, and H have insert, update, and read rights for records belonging to their own organization.  They are automatically given insert, update, and read rights so that someone at MDE does not have to manually do it for them.  Roles that allow them to assign roles to other users within their organization are manually added by a MDE user, D and E.
+
+One of our application 3 variants in the real-world does have the ability to switch profiles; we want this feature to be available for all applications.
+
+The goal is create a template for both new and existing applications to convert.  For instance, we have applications that uses active directory as authentication and authorization that would need to be converted to one of the three supported web application designs noted above.
+
+
+I've included a script, 090_dbo_application.sql.  This was taken from another project template as well and has example tables. You may have to modify these tables.
+ It can be used as a "demo domain" to show how tables are structured to incorporate this design template.  
+ 
+Deliverables:
+
+1. Create a database design document that supports the above three web applications variants.
+2. Based on the design document, create a project plan.
+3. Identify tasks to implement this project plan and create a implementation tracking EXCEL workbook used to track these tasks.  These tasks may include modifying the "demo domain" example tables.
+4. Create a second workbook with the following worksheets: an Overview, Scripts (Every artefact to be created, in install order), Build Log (What changed between the plan and the code while the scripts were being written, and why. Read this before concluding that a script disagrees with the design), Traceability (Design section to implementing artefact, so a reviewer can check coverage without reading every script).
+5. Create a third workbook that covers Gaps (Places where the design requires something that no artefact currently provides.)
+6. Create a fourth workbook identifying any "gotchas" to help developers with implementing this database design into their web application's UI.
+7. A markdown file that provides a list of documentation and what each documentation represents.
+8. If included as a task, modify the demo domain example tables.  Update documentation.
+
+We will start with the database design.  We will later design the UI to implement the authentication and authorization as a separate project with its own project plan and implementation tracking.  That later project is also a template so take that into account that another template will be using this database design template.
+
+
+
+
+
+

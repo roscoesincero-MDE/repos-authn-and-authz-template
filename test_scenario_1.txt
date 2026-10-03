@@ -1,0 +1,38 @@
+
+Database Test 1 Scenario.
+
+1 State agency, Department of Environmental Protection (DEP), oversees 67 jurisdictions/counties of the state.
+
+CRUD access profile means a profile that can read, update, insert, delete (soft delete), and execute.
+
+DEP has 10 users with read-only access profile. No profile switching.
+DEP has 20 users with read-only access who can switch profiles for the 67 counties, all with read-only access profiles as well.
+DEP has 20 users with CRUD access profile.  
+DEP has 50 users with CRUD access who can switch profiles for the 67 counties, all with CRUD access.
+DEP has 10 users that can assign profiles, administer user creation and deactivation, assign roles to profiles and create profiles.  These are platform admins.
+DEP has 10 users that can assign profiles and have read-only access profile.
+DEP has 20 users that can assign profiles and have CRUD profile.
+DEP has 10 users that can assign profiles and can switch profiles for the 67 counties, also have assign profile.
+DEP has 20 users with CRUD profile who can switch profiles for 10 counties, also have CRUD profile.  Randomly pick the 10 counties for these 20 users.
+All 67 counties have 20 users with read-only access profile.
+All 67 counties have 50 users with CRUD access.
+All 67 counties have 10 users that can assign profiles, administer user creation and deactivation, assign roles to profiles and create profiles.
+All 67 counties have 100 users who can switch between read-only profile and CRUD access profile.
+20 randomly selected counties have 20 users who also work for 1 other county.  All 20 users have both read-only and CRUD access profiles.  So this means that each user has 4 profiles, a pair of profiles for each county they work for.
+10 randomly selected counties have 20 users who also work for 10 other counties.  All 20 users have both read-only and CRUD access profiles.
+
+DEP users logs in using Microsoft Entra SSO except for the 10 users who can create profiles and administer account creation.  These platform admins login using user credentials with 2FA instead.  
+
+County users login using local user credentials with 2FA.
+
+Test using the "demo domain" with existing testTemplate DB to make sure that the nearly 13,000 users can perform their duties including the ability to switch profiles multiple times a session.  
+
+Perform the test again using the "demo domain" for the second time on a new testTemplate DB.
+Perform the test again for the third time on the existing testTemplate DB used in the second test.  The third test would double the number of users but not the number of agencies or counties.
+Perform the test again for the fourth time with existing testTemplate DB but add a second state agency, Environmental Protection Agency (EPA), that oversees 100 counties.  The user/profile pattern follows closely to the DEP agency.
+
+Identify any gaps including items missing from seed data.  Add new tasks if needed to the implementation workbook.
+
+Update workbooks, documentation, and REAMDE.
+
+

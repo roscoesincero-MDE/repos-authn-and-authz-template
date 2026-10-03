@@ -1,0 +1,48 @@
+# Excel lock files. Written whenever somebody has a workbook open and deleted when they close it.
+# Worth listing first because all four trackers are committed .xlsx, so these WILL appear.
+~$*.xlsx
+~$*.xls
+
+# sqlcmd and SSMS output. An install transcript names the server, the login that ran it, and every
+# object in the database -- none of which belongs in a public repository.
+*.out
+*.rpt
+database/_logs/
+logs/
+
+# SQL Server local artefacts.
+*.bak
+*.trn
+*.mdf
+*.ldf
+*.ssmssln
+*.ssmssuo
+
+# Visual Studio / VS Code / Rider local state.
+.vs/
+.vscode/
+.idea/
+*.user
+
+# .NET build output. The tools/ projects regenerate these on every build.
+bin/
+obj/
+
+# Python scratch. The convention gate is Python, so these turn up next to it.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets. Nothing in this repository should ever hold a connection string, a signing key, or the
+# TOTP column master key -- those live in the platform's secret store. These patterns are a
+# backstop for the day somebody creates one locally, not permission to have one.
+.env
+.env.*
+*.pfx
+*.publishsettings
+appsettings.*.local.json
+
+# OS noise.
+.DS_Store
+Thumbs.db
+desktop.ini
